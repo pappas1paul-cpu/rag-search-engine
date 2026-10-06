@@ -1,5 +1,5 @@
 import argparse
-
+from search_modes import keyword_search
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Keyword Search CLI")
@@ -13,6 +13,7 @@ def main() -> None:
     match args.command:
         case "search":
             print(f"Searching for: {args.query}")
+            keyword_search(args.query.lower())
         case _:
             parser.print_help()
 
