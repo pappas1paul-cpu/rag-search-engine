@@ -1,6 +1,21 @@
+from nltk.stem import PorterStemmer
 import json
 import string
 
+
+class InvertedIndex:
+    index = {}
+    docmap = {}
+
+    def __add_document(self,doc_id,text):
+        pass
+
+    def get_documents(self,term):
+        pass
+
+    def build(self):
+        pass
+    
 def keyword_search(search_query:str, json_path = "/home/ppappas/rag-search-engine/data/movies.json"):
     movies_dic = {}
     result = []
@@ -19,11 +34,12 @@ def keyword_search(search_query:str, json_path = "/home/ppappas/rag-search-engin
          x+=1
 
 def tokenize(search_query:str, title:str):
+    stemmer = PorterStemmer()
     stopwords = load_stopwords()
     search_tokens =  list(filter(lambda item: item not in stopwords, search_query.split()))
     title_tokens = list(filter(lambda item: item not in stopwords, title.split()))
     for token in search_tokens:
-        if any(token in title_token for title_token in title_tokens):
+        if any(stemmer.stem(token).lower() in stemmer.stem(title_token).lower() for title_token in title_tokens):
              return True
     return False
 
