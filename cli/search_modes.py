@@ -10,13 +10,32 @@ def keyword_search(search_query:str, json_path = "/home/ppappas/rag-search-engin
         title :str = movie["title"]
         title_lowered: str = movie["title"].lower()
         title_lowered = title_lowered.translate(str.maketrans(string.punctuation,string.punctuation,string.punctuation))
-        print(f"these are the raw titles :{title}")
-        print(f"this is the searched_titles: {title_lowered}")
-        if search_query.translate(str.maketrans(string.punctuation,string.punctuation,string.punctuation)) in title_lowered:
-                print(f"this is the searched string: {search_query}")
-                result.append(title)
+        search_query_processed = search_query.translate(str.maketrans(string.punctuation,string.punctuation,string.punctuation))
+        if tokenize(search_query_processed, title_lowered) == True:
+            result.append(title)
     x=1
     for title in result:
          print(f"{title}")
          x+=1
 
+def tokenize(search_query:str, title:str):
+    stopwords = load_stopwords()
+    search_tokens =  list(filter(lambda item: item not in stopwords, search_query.split()))
+    title_tokens = list(filter(lambda item: item not in stopwords, title.split()))
+    for token in search_tokens:
+        if any(token in title_token for title_token in title_tokens):
+             return True
+    return False
+
+def load_stopwords(file = r"/home/ppappas/rag-search-engine/data/stopwords.txt"):
+    with open(file,"r") as f:
+        stopwords = f.read()
+        stopwords = str.splitlines(stopwords)
+    tokens = []
+    for word in stopwords:
+        tokens.append(word
+                       .translate(str.maketrans(string.punctuation,
+                                                string.punctuation,
+                                                string.punctuation))
+                                                .lower())
+    return tokens
