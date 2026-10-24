@@ -2,24 +2,30 @@ import string
 from nltk.stem import PorterStemmer
 import pickle
 import os
-from collections import defaultdict
+from collections import defaultdict, Counter
 from search_utils import (
     DEFAULT_SEARCH_LIMIT,
     STOPWORDS_PATH, 
     load_movies, 
     CACHE_DIR,
     DOCMAP_PATH,
-    INDEX_PATH)
+    INDEX_PATH,
+    TF_PATH)
 
 class InvertedIndex:
     def __init__(self) -> None:
         self.index = defaultdict(set)
         self.docmap: dict[int, dict] = {}
+        self.term_frequencies = defaultdict(Counter)        
 
     def __add_document(self,doc_id:int,text:str) -> None:
         tokens = tokenize_text(text)
         for token in tokens:
             self.index[token].add(doc_id)
+        self.term_frequencies[doc_id].update(tokens)
+
+    def get_tf(self, doc_id, term):
+        return self.term_frequencies[doc_id][term]
 
     def get_documents(self, term:str) -> list[int]:
         doc_ids = []
@@ -41,12 +47,16 @@ class InvertedIndex:
             pickle.dump(self.index, f)
         with open(DOCMAP_PATH, "wb") as f:
             pickle.dump(self.docmap, f)
+        with open(TF_PATH, "wb") as f:
+            pickle.dump(self.term_frequencies, f)
 
     def load(self):
         with open(INDEX_PATH, "rb") as f:
             self.index=pickle.load(f)
         with open(DOCMAP_PATH, "rb") as f:
             self.docmap=pickle.load(f)
+        with open (TF_PATH, "rb") as f:
+            self.term_frequencies=pickle.load(f)
         
 
 def build_command():
@@ -114,3 +124,14 @@ def tokenize_text(text: str) -> list[str]:
     for word in filtered_words:
         stemmed_words.append(stemmer.stem(word))
     return stemmed_words
+
+def tokenize_single_term(term:str) -> str:
+    tokens = tokenize_text(term)
+    if len(tokens) != 1:
+        raise ValueError("term must be a single token")
+    return tokens[0]
+
+def tf_command(doc_id: int, term: str) -> int:
+    idx = InvertedIndex()
+    idx.load()
+    return idx.get_tf(doc_id, tokenize_single_term(term))
