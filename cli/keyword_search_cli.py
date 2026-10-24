@@ -11,11 +11,13 @@ def main() -> None:
     search_parser = subparsers.add_parser("search", help="Search movies using BM25")
     search_parser.add_argument("query", type=str, help="Search query")
 
-    tf_parser = subparsers.add_parser(
-        "tf", help="Get term frequency per given document ID"
-    )
+    tf_parser = subparsers.add_parser("tf", help="Get term frequency per given document ID")
+    idf_parser = subparsers.add_parser("idf",help="Get the term inverted frequency per given document ID")
+
     tf_parser.add_argument("doc_id", type=int, help="Document ID")
     tf_parser.add_argument("term", type=str, help="Term for which to get frequency value")
+    idf_parser.add_argument("doc_id", type=int, help="Document ID")
+    idf_parser.add_argument("term", type=str,help="Term for which to get inverted frequency value")
     args = parser.parse_args()
 
     match args.command:
