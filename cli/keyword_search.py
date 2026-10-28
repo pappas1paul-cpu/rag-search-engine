@@ -2,6 +2,7 @@ import string
 from nltk.stem import PorterStemmer
 import pickle
 import os
+import math
 from collections import defaultdict, Counter
 from search_utils import (
     DEFAULT_SEARCH_LIMIT,
@@ -26,6 +27,14 @@ class InvertedIndex:
 
     def get_tf(self, doc_id, term):
         return self.term_frequencies[doc_id][term]
+
+    def get_idf(self,term:str) -> float:
+        doc_count = len(self.docmap)
+        term_doc_count = len(self.index[term])
+        return math.log((doc_count + 1)/ (term_doc_count + 1))
+
+    def get_tf_idf(self, doc_id:int,term:str):
+        return self.get_tf(doc_id, term) * self.get_idf(term)
 
     def get_documents(self, term:str) -> list[int]:
         doc_ids = []
@@ -135,3 +144,13 @@ def tf_command(doc_id: int, term: str) -> int:
     idx = InvertedIndex()
     idx.load()
     return idx.get_tf(doc_id, tokenize_single_term(term))
+
+def idf_command(term:str) ->float:
+    idx = InvertedIndex()
+    idx.load()
+    return idx.get_idf(tokenize_single_term(term))
+
+def tf_idf_command(doc_id:int, term:str) ->float:
+    idx = InvertedIndex()
+    idx.load()
+    return idx.get_tf_idf(doc_id, term)
