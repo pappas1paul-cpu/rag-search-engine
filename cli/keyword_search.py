@@ -3,8 +3,10 @@ from nltk.stem import PorterStemmer
 import pickle
 import os
 import math
+from math import log
 from collections import defaultdict, Counter
 from search_utils import (
+    BM25_K1,
     DEFAULT_SEARCH_LIMIT,
     STOPWORDS_PATH, 
     load_movies, 
@@ -36,6 +38,16 @@ class InvertedIndex:
     def get_tf_idf(self, doc_id:int,term:str):
         return self.get_tf(doc_id, term) * self.get_idf(term)
 
+    def get_bm25_idf(self, term:str)->float:
+        N = len(self.docmap)
+        df = len(self.index[term])
+        idf = log((N - df + 0.5) / (df + 0.5) + 1)
+        return idf
+
+    def get_bm25_tf(self, doc_id:int, term:str, k1=BM25_K1):
+        tf = self.get_tf(doc_id,term)
+        return (tf * (k1 + 1)) / (tf + k1)
+    
     def get_documents(self, term:str) -> list[int]:
         doc_ids = []
         for id in self.index.get(term, set()):
@@ -154,3 +166,15 @@ def tf_idf_command(doc_id:int, term:str) ->float:
     idx = InvertedIndex()
     idx.load()
     return idx.get_tf_idf(doc_id, term)
+
+def bm_25_idf_command(term:str)->float:
+    idx = InvertedIndex()
+    idx.load()
+    tokenized_term = tokenize_single_term(term)
+    return idx.get_bm25_idf(tokenized_term)
+
+def bm25_tf_command(doc_id:int, term:str, k1 = BM25_K1 or None):
+    idx = InvertedIndex()
+    idx.load()
+    tokenized_term = tokenize_single_term(term)
+    return idx.get_bm25_tf(doc_id,tokenized_term)
