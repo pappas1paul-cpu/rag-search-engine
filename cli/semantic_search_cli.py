@@ -1,4 +1,5 @@
 import argparse
+import numpy
 from lib import semantic_search
 
 def main() -> None:
@@ -7,6 +8,7 @@ def main() -> None:
     subparsers.add_parser("verify", help="Verify language model and max sequence length")
     search_parser = subparsers.add_parser("embed_text", help="Create text embeddings")
     search_parser.add_argument("text", type=str, help="Text to embed")
+    verification_parser = subparsers.add_parser("verify_embeddings", help="Verify embeddings")
     args = parser.parse_args()
 
     match args.command:
@@ -16,6 +18,9 @@ def main() -> None:
         case "embed_text":
             print("embedding text...")
             semantic_search.embed_text(args.text)
+        case "verify_embeddings":
+            print("verifying embeddings...")
+            semantic_search.verify_embeddings()
         
         case _:
             parser.print_help()
