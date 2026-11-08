@@ -2,6 +2,11 @@ import json
 import os
 from typing import Any, TypedDict
 
+class SemanticSearchResult(TypedDict):
+    score: float
+    title: str
+    description: str
+
 
 class Movie(TypedDict):
     id: int

@@ -1,16 +1,37 @@
 import argparse
-import numpy
 from lib import semantic_search
+from lib import search_utils
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Semantic Search CLI")
-    subparsers = parser.add_subparsers(dest="command", help="Available commands")
-    subparsers.add_parser("verify", help="Verify language model and max sequence length")
-    search_parser = subparsers.add_parser("embed_text", help="Create text embeddings")
-    search_parser.add_argument("text", type=str, help="Text to embed")
-    verification_parser = subparsers.add_parser("verify_embeddings", help="Verify embeddings")
-    query_embedding_parser= subparsers.add_parser("embed_query", help = "Create query embeddings")
-    query_embedding_parser.add_argument("query", type=str, help="User query for which to generate embeddings")
+    
+    subparsers = parser.add_subparsers(
+        dest="command", help="Available commands")
+    
+    subparsers.add_parser(
+        "verify", help="Verify language model and max sequence length")
+    
+    search_parser = subparsers.add_parser(
+        "embed_text", help="Create text embeddings")
+    search_parser.add_argument(
+        "text", type=str, help="Text to embed")
+    
+    verification_parser = subparsers.add_parser(
+        "verify_embeddings", help="Verify embeddings")
+    
+    query_embedding_parser= subparsers.add_parser(
+        "embed_query", help = "Create query embeddings")
+    query_embedding_parser.add_argument(
+        "query", type=str, help="User query for which to generate embeddings")
+    
+    search_parser = subparsers.add_parser(
+        "search", help="Search for movies using semantic search"
+    )
+    search_parser.add_argument(
+        "query", type=str, help="Search query")
+    search_parser.add_argument(
+        "--limit", type=int, default=search_utils.DEFAULT_SEARCH_LIMIT, help="Number of results to return"
+    )
     args = parser.parse_args()
 
     match args.command:
@@ -26,6 +47,8 @@ def main() -> None:
         case "embed_query":
             print("generating query embeddings")
             semantic_search.embed_query_text(args.query)
+        case "search":
+            semantic_search.semantic_search(args.query, args.limit)
         
         case _:
             parser.print_help()
