@@ -32,6 +32,18 @@ def main() -> None:
     search_parser.add_argument(
         "--limit", type=int, default=search_utils.DEFAULT_SEARCH_LIMIT, help="Number of results to return"
     )
+
+    chunk_parser = subparsers.add_parser(
+        "chunk", help="Splits long text into smaller pieces for embedding")
+    chunk_parser.add_argument(
+       "text", type=str, help="Text to chunk"
+       )
+    chunk_parser.add_argument(
+        "--chunk-size", type=int, default=200, help="Size of each chunk in words"
+    )
+    chunk_parser.add_argument(
+        "--overlap", type=int, default = 0, help = "Size of text overlap when chunking"
+    )
     args = parser.parse_args()
 
     match args.command:
@@ -49,7 +61,8 @@ def main() -> None:
             semantic_search.embed_query_text(args.query)
         case "search":
             semantic_search.semantic_search(args.query, args.limit)
-        
+        case "chunk":
+            semantic_search.chunk_text(args.text, args.chunk_size, args.overlap)
         case _:
             parser.print_help()
 

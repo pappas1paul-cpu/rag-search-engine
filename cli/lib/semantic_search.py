@@ -8,11 +8,33 @@ from pathlib import Path
 from .search_utils import (
     DEFAULT_SEARCH_LIMIT,
     MOVIE_EMBEDDINGS_PATH,
+    DEFAULT_CHUNK_SIZE,
+    DEFAULT_CHUNK_OVERLAP,
     Movie,
     SemanticSearchResult,
     load_movies)
 
 EmbeddingArray = NDArray[Any]
+
+def text_chunking(text:str, chunk_size:int = DEFAULT_CHUNK_SIZE, overlap:int = DEFAULT_CHUNK_OVERLAP)-> list[str]:
+    words = text.split()
+    chunks = []
+    n_words = len(words)
+    i = 0
+    while i < n_words:
+        chunk_words =  words[i:i+chunk_size]
+        if chunks and len(chunk_words) <= overlap:
+            break
+        chunks.append(" ".join(chunk_words))
+        i+=chunk_size - overlap
+    return chunks
+
+def chunk_text(text:str, chunk_size = DEFAULT_CHUNK_SIZE, overlap:int = DEFAULT_CHUNK_OVERLAP)-> None:
+    chunks = text_chunking(text, chunk_size, overlap)
+    print(f"Chunking {len(text)} characters")
+    for i, chunk in enumerate(chunks):
+        print(f"{i+1}. {chunk}")
+
 def semantic_search(query:str, limit:int = DEFAULT_SEARCH_LIMIT) -> None:
     search_instance = SemanticSearch()
     documents = load_movies()
