@@ -1,7 +1,7 @@
 import argparse
 
-from lib import keyword_search
-from lib import search_utils 
+from lib import keyword_search, search_utils
+
 
 
 def main() -> None:

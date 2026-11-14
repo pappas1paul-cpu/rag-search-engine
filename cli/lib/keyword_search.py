@@ -5,7 +5,7 @@ import os
 import math
 from math import log
 from collections import defaultdict, Counter
-from search_utils import (
+from .search_utils import (
     format_search_result,
     SearchResult,
     BM25_B,

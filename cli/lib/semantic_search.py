@@ -2,6 +2,7 @@ from sentence_transformers import SentenceTransformer
 from numpy.typing import NDArray
 from typing import Any
 import numpy as np
+import re
 import os
 import json
 from pathlib import Path
@@ -10,11 +11,39 @@ from .search_utils import (
     MOVIE_EMBEDDINGS_PATH,
     DEFAULT_CHUNK_SIZE,
     DEFAULT_CHUNK_OVERLAP,
+    DEFAULT_SEMANTIC_CHUNK_SIZE,
     Movie,
     SemanticSearchResult,
     load_movies)
 
 EmbeddingArray = NDArray[Any]
+
+def semantic_chunk(
+        text:str,
+        max_chunk_size:int = DEFAULT_SEMANTIC_CHUNK_SIZE,
+        overlap:int = DEFAULT_CHUNK_OVERLAP
+)->list[str]:
+    sentences = re.split(r"(?<=[.!?])\s+", text)
+    chunks = []
+    i=0
+    n_sentences = len(sentences)
+    while i < n_sentences:
+        chunk_sentences = sentences[i : i + max_chunk_size]
+        if chunks and len(chunk_sentences) <= overlap:
+            break
+        chunks.append(" ".join(chunk_sentences))
+        i += max_chunk_size - overlap
+    return chunks
+
+def semantic_chunk_text(
+        text:str,
+        max_chunk_size:int = DEFAULT_SEMANTIC_CHUNK_SIZE,
+        overlap:int = DEFAULT_CHUNK_OVERLAP
+) -> None:
+    chunks = semantic_chunk(text, max_chunk_size, overlap)
+    print(f"Semantically chunking {len(text)} characters")
+    for i, chunk in enumerate(chunks):
+        print(f"{i+1}. {chunk}")
 
 def text_chunking(text:str, chunk_size:int = DEFAULT_CHUNK_SIZE, overlap:int = DEFAULT_CHUNK_OVERLAP)-> list[str]:
     words = text.split()
