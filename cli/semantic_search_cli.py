@@ -44,6 +44,7 @@ def main() -> None:
     chunk_parser.add_argument(
         "--overlap", type=int, default = 0, help = "Size of text overlap when chunking"
     )
+    
     semantic_chunk_parser = subparsers.add_parser(
         "semantic_chunk", help="Splits long text into smaller semanticaly connected pieces"
     )
@@ -56,6 +57,11 @@ def main() -> None:
     semantic_chunk_parser.add_argument(
         "--overlap", type=int, default = 0, help="Word overlaping from chunk to chunk"
     )
+    subparsers.add_parser(
+        "embed_chunks", help="Generate embeddings for chunked documents"
+    )
+
+   
     args = parser.parse_args()
 
     match args.command:
@@ -77,6 +83,9 @@ def main() -> None:
             semantic_search.chunk_text(args.text, args.chunk_size, args.overlap)
         case "semantic_chunk":
             semantic_search.semantic_chunk_text(args.text, args.max_chunk_size, args.overlap)
+        case "embed_chunks":
+            embeddings = semantic_search.embed_chunks_command()
+            print(f"Generated {len(embeddings)} chunked embeddings")
         case _:
             parser.print_help()
 
