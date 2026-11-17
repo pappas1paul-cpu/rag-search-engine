@@ -14,6 +14,9 @@ from .search_utils import (
     DEFAULT_SEMANTIC_CHUNK_SIZE,
     CHUNK_EMBEDDINGS_PATH,
     CHUNK_METADATA_PATH,
+    DOCUMENT_PREVIEW_LENGTH,
+    SearchResult,
+    format_search_result,
     Movie,
     SemanticSearchResult,
     load_movies)
@@ -22,6 +25,15 @@ class ChunkMetadata(TypedDict):
     movie_idx:int
     chunk_idx:int
     total_chunks: int
+
+class ChunkScore(TypedDict):
+    movie_idx:int
+    chunk_idx:int
+    score:float
+
+class ChunkedSearchResponse(TypedDict):
+    query:str
+    results:list[SearchResult]
 
 EmbeddingArray = NDArray[Any]
 
@@ -35,15 +47,27 @@ def semantic_chunk(
         max_chunk_size:int = DEFAULT_SEMANTIC_CHUNK_SIZE,
         overlap:int = DEFAULT_CHUNK_OVERLAP
 )->list[str]:
-    sentences = re.split(r"(?<=[.!?])\s+", text)
+    cleaned_text = text.strip()
+    if len(cleaned_text) == 0:
+        return []
+    sentences = re.split(r"(?<=[.!?])\s+", cleaned_text)
     chunks = []
     i=0
     n_sentences = len(sentences)
+    if n_sentences == 1 and not sentences[0].endswith((".","!","?")):
+        sentences = [cleaned_text]
     while i < n_sentences:
         chunk_sentences = sentences[i : i + max_chunk_size]
         if chunks and len(chunk_sentences) <= overlap:
             break
-        chunks.append(" ".join(chunk_sentences))
+        cleaned_chunk_sentences = []
+        for sentence in chunk_sentences: 
+            cleaned_sentence = sentence.strip()
+            if len(cleaned_sentence) == 0:
+                continue
+            cleaned_chunk_sentences.append(cleaned_sentence)
+        if cleaned_chunk_sentences:
+            chunks.append(" ".join(cleaned_chunk_sentences))
         i += max_chunk_size - overlap
     return chunks
 
@@ -130,7 +154,7 @@ class SemanticSearch:
         self.embeddings = None
         self.documents = None
         self.document_map = {}
-
+    
     def search(self, query:str, limit:int):
         if self.embeddings is None:
             raise ValueError("No embeddings loaded. Call `load_or_create_embeddings` first.")
@@ -195,6 +219,47 @@ class ChunkedSemanticSearch(SemanticSearch):
         self.chunk_embeddings: EmbeddingArray | None = None
         self.chunk_metadata: list[ChunkMetadata] | None = None
 
+    def search_chunks(self, query:str, limit:int = 10) -> SearchResult:
+            
+            query_embedding = self.generate_embedding(query)
+            chunk_scores: list[tuple[float, ChunkMetadata]] =[]
+            for i, chunk_embedding in enumerate(self.chunk_embeddings):
+                similarity = cosine_similarity(query_embedding,chunk_embedding)
+                chunk_scores.append(
+                    {
+                        "chunk_idx":self.chunk_metadata[i]["chunk_idx"],
+                        "movie_idx":self.chunk_metadata[i]["movie_idx"],
+                        "score":similarity
+                    }
+                )
+            
+            best_scores : dict[int,float] = {}
+            for i in range(0,len(chunk_scores)):
+                movie_idx = chunk_scores[i]["movie_idx"]
+                if chunk_scores[i]["movie_idx"] not in best_scores or \
+                    chunk_scores[i]["score"] > best_scores[movie_idx]:
+                    best_scores[movie_idx]=chunk_scores[i]["score"]
+
+            best_movies = sorted(best_scores.items(), key=lambda x:x[1], reverse=True)
+            if self.documents is None or len(self.documents) == 0:
+                            raise ValueError(
+                                  "No documents loaded. Call load_or_create_chunk_embeddings first."
+                            )
+            results:list[SearchResult] = []
+            for movie_idx, score in best_movies[:limit]:
+                if movie_idx is None:
+                    continue
+                doc = self.documents[movie_idx]
+                results.append(
+                    format_search_result(
+                        doc_id=doc["id"],
+                        title=doc["title"],
+                        document=doc["description"][:DOCUMENT_PREVIEW_LENGTH],
+                        score=score
+                    )
+                )
+            return results
+
     def build_chunk_embeddings(self, documents:list[Movie]) -> EmbeddingArray:
         self.documents = documents
         self.document_map = {}
@@ -250,4 +315,12 @@ class ChunkedSemanticSearch(SemanticSearch):
                 self.chunk_metadata = data["chunks"]
             return self.chunk_embeddings
         return self.build_chunk_embeddings(documents)
-    
+
+def search_chunk_command(
+        query:str, limit:int = DEFAULT_SEARCH_LIMIT
+) -> ChunkedSearchResponse:
+    movies = load_movies()
+    searcher = ChunkedSemanticSearch()
+    searcher.load_or_create_chunk_embeddings(movies)
+    results = searcher.search_chunks(query, limit)
+    return {"query":query, "results":results}
