@@ -12,15 +12,15 @@ def main() -> None:
         "verify", help="Verify language model and max sequence length")
     
     search_parser = subparsers.add_parser(
-        "embed_text", help="Create text embeddings")
+        "embed-text", help="Create text embeddings")
     search_parser.add_argument(
         "text", type=str, help="Text to embed")
     
     verification_parser = subparsers.add_parser(
-        "verify_embeddings", help="Verify embeddings")
+        "verify-embeddings", help="Verify embeddings")
     
     query_embedding_parser= subparsers.add_parser(
-        "embed_query", help = "Create query embeddings")
+        "embed-query", help = "Create query embeddings")
     query_embedding_parser.add_argument(
         "query", type=str, help="User query for which to generate embeddings")
     
@@ -58,10 +58,10 @@ def main() -> None:
         "--overlap", type=int, default = 0, help="Word overlaping from chunk to chunk"
     )
     subparsers.add_parser(
-        "embed_chunks", help="Generate embeddings for chunked documents"
+        "embed-chunks", help="Generate embeddings for chunked documents"
     )
     search_chunked_parser = subparsers.add_parser(
-        "search_chunked", help="Search using chunked embeddings"
+        "search-chunked ", help="Search using chunked embeddings"
     )
     search_chunked_parser.add_argument(
         "query", type=str, help="Search query"
@@ -77,25 +77,25 @@ def main() -> None:
         case "verify":
             print("Verifying model and max sequence length")
             semantic_search.SemanticSearch.verify_model()
-        case "embed_text":
+        case "embed-text":
             print("embedding text...")
             semantic_search.embed_text(args.text)
-        case "verify_embeddings":
+        case "verify-embeddings":
             print("verifying embeddings...")
             semantic_search.verify_embeddings()
-        case "embed_query":
+        case "embed-query":
             print("generating query embeddings")
             semantic_search.embed_query_text(args.query)
         case "search":
             semantic_search.semantic_search(args.query, args.limit)
         case "chunk":
             semantic_search.chunk_text(args.text, args.chunk_size, args.overlap)
-        case "semantic_chunk":
+        case "semantic-chunk":
             semantic_search.semantic_chunk_text(args.text, args.max_chunk_size, args.overlap)
-        case "embed_chunks":
+        case "embed-chunks":
             embeddings = semantic_search.embed_chunks_command()
             print(f"Generated {len(embeddings)} chunked embeddings")
-        case "search_chunked":
+        case "search-chunked ":
             result = semantic_search.search_chunk_command(args.query, args.limit)
             print(f"Query: {result['query']}")
             print("Results:")
