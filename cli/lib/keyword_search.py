@@ -78,7 +78,7 @@ class InvertedIndex:
         scores = sorted(scores.items(),key=lambda item: item[1], reverse = True)
         results:list[SearchResult] = []
     
-        for doc_id, score in scores[:limit]:
+        for doc_id, score in scores[ :limit]:
             doc = self.docmap[doc_id]
             formatted_result = format_search_result(
                 doc_id=doc["id"],
